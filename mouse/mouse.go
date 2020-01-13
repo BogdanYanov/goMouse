@@ -1,102 +1,169 @@
 package mouse
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 type Mouse struct {
-	posX, posY        uint32
-	leftBtn, rightBtn Button
-	sensitivity       uint8
-	Wheel
+	PosX        uint32 `json:"pos_x"`
+	PosY        uint32 `json:"pos_y"`
+	LeftBtn     Button `json:"l_button"`
+	RightBtn    Button `json:"r_button"`
+	Sens 		uint8  `json:"sensitivity"`
+	Wheel       `json:"wheel"`
 }
 
 func NewMouse(monWidth, monHeight uint32) *Mouse {
-	return &Mouse {
+	mouse := &Mouse{
 		monWidth / 2,
 		monHeight / 2,
 		Button{},
 		Button{},
 		1,
-		Wheel{5, 1},
+		Wheel{5},
 	}
+	return mouse
 }
 
 func (m *Mouse) Move(x, y, monWidth, monHeight uint32) {
-	switch {
-	case x > monWidth:
+	if x > monWidth {
 		x = monWidth
-	case y > monHeight:
+	}
+	if y > monHeight {
 		y = monHeight
 	}
-	Loop:
-		for {
-			if x > m.posX {
-				if m.posX + uint32(m.sensitivity) <= x {
-					m.posX += uint32(m.sensitivity)
-				} else {
-					m.posX += x - m.posX
-				}
+Loop:
+	for {
+		if x > m.PosX {
+			if m.PosX+uint32(m.Sens) <= x {
+				m.PosX += uint32(m.Sens)
 			} else {
-				if m.posX - uint32(m.sensitivity) >= x {
-					m.posX -= uint32(m.sensitivity)
-				} else {
-					m.posX -= m.posX - x
-				}
+				m.PosX += x - m.PosX
 			}
-
-			if y > m.posY {
-				if m.posY + uint32(m.sensitivity) <= y {
-					m.posY += uint32(m.sensitivity)
-				} else {
-					m.posY += y - m.posY
-				}
+		} else {
+			if m.PosX-uint32(m.Sens) >= x {
+				m.PosX -= uint32(m.Sens)
 			} else {
-				if m.posY - uint32(m.sensitivity) >= y {
-					m.posY -= uint32(m.sensitivity)
-				} else {
-					m.posY -= m.posY - y
-				}
-			}
-
-			if x == m.posX && y == m.posY {
-				break Loop
+				m.PosX -= m.PosX - x
 			}
 		}
+
+		if y > m.PosY {
+			if m.PosY+uint32(m.Sens) <= y {
+				m.PosY += uint32(m.Sens)
+			} else {
+				m.PosY += y - m.PosY
+			}
+		} else {
+			if m.PosY-uint32(m.Sens) >= y {
+				m.PosY -= uint32(m.Sens)
+			} else {
+				m.PosY -= m.PosY - y
+			}
+		}
+
+		if m.PosX == x && m.PosY == y {
+			break Loop
+		}
+	}
+	m.WriteJSON()
 }
 
 func (m *Mouse) Sensitivity(val uint8) {
 	if val > 10 {
-		m.sensitivity = 10
-	} else if val > 0 {
-		m.sensitivity = val
+		m.Sens = 10
+	} else if val == 0 {
+		m.Sens = 1
+	} else {
+		m.Sens = val
 	}
+	m.WriteJSON()
 }
 
 func (m *Mouse) LeftBtnDown() {
-	m.leftBtn.Down()
+	m.LeftBtn.Down()
+	m.WriteJSON()
 }
 
 func (m *Mouse) RightBtnDown() {
-	m.rightBtn.Down()
+	m.RightBtn.Down()
+	m.WriteJSON()
 }
 
 func (m *Mouse) LeftBtnUp() {
-	m.leftBtn.Up()
+	m.LeftBtn.Up()
+	m.WriteJSON()
 }
 
 func (m *Mouse) RightBtnUp() {
-	m.rightBtn.Up()
+	m.RightBtn.Up()
+	m.WriteJSON()
+}
+
+func (m *Mouse) ScrollUp() {
+	if m.Wheel.ScrollVal != 10 {
+		m.Wheel.ScrollVal++
+		m.WriteJSON()
+	}
+}
+
+func (m *Mouse) ScrollDown() {
+	if m.Wheel.ScrollVal != 1 {
+		m.Wheel.ScrollVal--
+		m.WriteJSON()
+	}
 }
 
 func (m *Mouse) Info() {
-	fmt.Printf("Mouse information:\n" +
-		"X position - %d\n" +
-		"Y position - %d\n" +
-		"Sensitivity - %d\n" +
-		"Is left button pressed? - %v\n" +
-		"Is right button pressed? - %v\n" +
-		"Wheel sensitivity - %d\n" +
-		"Scroll value - %d",
-		m.posX, m.posY, m.sensitivity, m.leftBtn.BtnPressed, m.rightBtn.BtnPressed, m.Wheel.sensitivity, m.Wheel.scrollVal)
+	fmt.Printf("Mouse information:\n"+
+		"X position - %d\n"+
+		"Y position - %d\n"+
+		"Sensitivity - %d\n"+
+		"Is left button pressed? - %v\n"+
+		"Is right button pressed? - %v\n"+
+		"Scroll value - %d\n",
+		m.PosX, m.PosY, m.Sens, m.LeftBtn.BtnPressed, m.RightBtn.BtnPressed, m.Wheel.ScrollVal)
+}
+
+func (m *Mouse) Reset(monWidth, monHeight uint32) {
+	m.PosX = monWidth / 2
+	m.PosY = monHeight / 2
+	m.LeftBtnUp()
+	m.RightBtnUp()
+	m.Wheel.ScrollVal = 5
+	m.Sensitivity(1)
+	m.WriteJSON()
+}
+
+func GetMouse(m *Mouse) {
+	file, _ := os.OpenFile("mouse.json", os.O_RDWR, 0755)
+	defer file.Close()
+	jsonMouse, _ := ioutil.ReadAll(file)
+	json.Unmarshal(jsonMouse, m)
+}
+
+func (m *Mouse) WriteJSON() {
+	var flags int
+	if FileExists() {
+		os.Truncate("mouse.json", 0)
+		flags = os.O_WRONLY
+	} else {
+		flags = os.O_WRONLY|os.O_CREATE
+	}
+	file, _ := os.OpenFile("mouse.json", flags, 0755)
+	defer file.Close()
+	json.NewEncoder(file).Encode(m)
+}
+
+func FileExists() bool {
+	info, err := os.Stat("mouse.json")
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 

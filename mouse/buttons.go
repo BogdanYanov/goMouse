@@ -6,7 +6,7 @@ type Clicker interface {
 }
 
 type Button struct {
-	BtnPressed bool
+	BtnPressed bool `json:"is_pressed"`
 }
 
 func (btn *Button) Down() {
@@ -16,5 +16,3 @@ func (btn *Button) Down() {
 func (btn *Button) Up() {
 	btn.BtnPressed = false
 }
-
-
