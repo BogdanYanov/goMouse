@@ -6,6 +6,7 @@ import (
 
 var lFlagU bool
 var rFlagU bool
+
 // btnUpCmd represents the btnUp command
 var btnUpCmd = &cobra.Command{
 	Use:   "btn-up",
@@ -13,7 +14,7 @@ var btnUpCmd = &cobra.Command{
 	Long: `The command performs a button release. Example:
 ./goMouse btn-up -l // release the left button
 `,
-	RunE: func(cmd *cobra.Command, args []string) error{
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if !lFlagU && !rFlagU {
 			myMouse.LeftBtnUp()
 			myMouse.RightBtnUp()

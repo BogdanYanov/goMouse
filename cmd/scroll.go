@@ -8,16 +8,17 @@ import (
 
 var scrlUp bool
 var scrlDown bool
+
 // scrollCmd represents the scroll command
 var scrollCmd = &cobra.Command{
 	Use:   "scroll",
 	Short: "This command scroll the mouse wheel up or down",
 	Long: `This command scroll the mouse wheel up or down. Example:
 ./goMouse scroll -u // scroll up the mouse wheel`,
-	RunE: func(cmd *cobra.Command, args []string) error{
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if !scrlUp && !scrlDown {
 			return fmt.Errorf("need flag --up [-u] or --down [-d]")
-		} 
+		}
 		if scrlUp && scrlDown {
 			return fmt.Errorf("need only one flag: --up [-u] or --down [-d]")
 		}

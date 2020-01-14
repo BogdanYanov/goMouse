@@ -13,7 +13,7 @@ var sensCmd = &cobra.Command{
 	Long: `Set mouse sensitivity. Example:
 ./goMouse sens 5 // set mouse sensitivity 5
 `,
-	RunE: func(cmd *cobra.Command, args []string) error{
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("need argument of sensitivity")
 		} else if len(args) > 1 {

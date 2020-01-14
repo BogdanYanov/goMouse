@@ -3,8 +3,10 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 )
+
 var lFlagD bool
 var rFlagD bool
+
 // btnDownCmd represents the btnDown command
 var btnDownCmd = &cobra.Command{
 	Use:   "btn-down",
@@ -12,7 +14,7 @@ var btnDownCmd = &cobra.Command{
 	Long: `The command performs a button push. Example:
 ./goMouse btn-down -r // push the right button
 `,
-	RunE: func(cmd *cobra.Command, args []string) error{
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if !lFlagD && !rFlagD {
 			myMouse.LeftBtnDown()
 			myMouse.RightBtnDown()

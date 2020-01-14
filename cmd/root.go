@@ -19,7 +19,6 @@ var myMouse *mouse.Mouse
 var myScreen screen
 var width, height uint32 = 1024, 768
 
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "goMouse",
@@ -28,6 +27,7 @@ var rootCmd = &cobra.Command{
 `,
 }
 
+// Execute executes cli program with custom commands.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
