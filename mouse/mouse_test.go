@@ -2,10 +2,12 @@ package mouse
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"testing"
+	"github.com/google/go-cmp/cmp"
 )
 
 type screen struct {
@@ -155,4 +157,58 @@ func TestMouse_Info(t *testing.T) {
 		t.Errorf("Error info output. Expected:\n%s\nGot:\n%s", testInfoStr, buf.String())
 	}
 
+}
+
+func TestMouse_Reset(t *testing.T) {
+	myScreen := screen{width, height}
+	myMouse := NewMouse(myScreen.width, myScreen.height)
+	myMouse.Move(1, 1, myScreen.width, myScreen.height)
+	myMouse.Sensitivity(4)
+	myMouse.RightBtnDown()
+	myMouse.ScrollUp()
+	myMouse.ScrollUp()
+	myMouse.Reset(myScreen.width, myScreen.height)
+	var str = `Mouse information:
+X position - 512
+Y position - 384
+Sensitivity - 1
+Is left button pressed? - false
+Is right button pressed? - false
+Scroll value - 5
+`
+	oldOutput := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	myMouse.Info()
+
+	w.Close()
+	os.Stdout = oldOutput
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	if equal := strings.Compare(str, buf.String()); equal != 0 {
+		t.Errorf("Error info output. Expected:\n%s\nGot:\n%s", str, buf.String())
+	}
+}
+
+func TestMouse_GetMouse(t *testing.T) {
+	os.Truncate("mouse.json", 0)
+	myScreen := screen{width, height}
+	myMouse := NewMouse(myScreen.width, myScreen.height)
+	myMouse.Move(1, 1, myScreen.width, myScreen.height)
+	myMouse.Sensitivity(4)
+	myMouse.RightBtnDown()
+	myMouse.ScrollUp()
+	myMouse.ScrollUp()
+	myMouse2 := NewMouse(myScreen.width, myScreen.height)
+	GetMouse(myMouse2)
+	if !cmp.Equal(myMouse, myMouse2){
+		t.Errorf("Error copy mouse states and settings.")
+		fmt.Println("Expected:")
+		myMouse.Info()
+		fmt.Println("\nGot:")
+		myMouse2.Info()
+	}
 }
